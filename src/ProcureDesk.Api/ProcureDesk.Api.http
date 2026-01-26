@@ -1,0 +1,6 @@
+@ProcureDesk.Api_HostAddress = http://localhost:5100
+
+GET {{ProcureDesk.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

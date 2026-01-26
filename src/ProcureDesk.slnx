@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ProcureDesk.Api/ProcureDesk.Api.csproj" />
+  <Project Path="ProcureDesk.Application/ProcureDesk.Application.csproj" />
+  <Project Path="ProcureDesk.Domain/ProcureDesk.Domain.csproj" />
+  <Project Path="ProcureDesk.Infrastructure/ProcureDesk.Infrastructure.csproj" />
+</Solution>
