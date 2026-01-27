@@ -1,82 +1,48 @@
-﻿using System;
-using ProcureDesk.Domain;
+﻿using ProcureDesk.Domain;
 using Xunit;
 
-namespace ProcureDesk.Tests.Domain;
+namespace ProcureDesk.Domain.Tests;
 
 public class GoodTests
 {
     [Fact]
-    public void Constructor_ShouldTrimCodeAndName()
+    public void Validate_ShouldFail_WhenCodeIsNull()
     {
-        var good = new Good("  SKU001  ", "  Widget A  ");
-
-        Assert.Equal("SKU001", good.Code);
-        Assert.Equal("Widget A", good.Name);
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void Constructor_ShouldThrow_WhenCodeIsNullOrWhitespace(string? code)
-    {
-        var ex = Assert.Throws<ArgumentException>(() => new Good(code!, "Widget"));
-        Assert.Equal("code", ex.ParamName);
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void Constructor_ShouldThrow_WhenNameIsNullOrWhitespace(string? name)
-    {
-        var ex = Assert.Throws<ArgumentException>(() => new Good("SKU123", name!));
-        Assert.Equal("name", ex.ParamName);
-    }
-
-    [Fact]
-    public void Rename_ShouldUpdateName_AndTrim()
-    {
-        var good = new Good("SKU123", "Old");
-
-        good.Rename("   New Name   ");
-
-        Assert.Equal("New Name", good.Name);
-    }
-
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void Rename_ShouldThrow_WhenNewNameIsNullOrWhitespace(string? newName)
-    {
-        var good = new Good("SKU123", "Widget");
-
-        var ex = Assert.Throws<ArgumentException>(() => good.Rename(newName!));
-        Assert.Equal("name", ex.ParamName); // from NormalizeName(nameof(name))
-    }
-
-    [Fact]
-    public void Validate_ShouldReturnFalse_WhenCodeMissing()
-    {
-        var (isValid, message) = Good.Validate("", "Widget");
+        var (isValid, message) = Good.Validate(null!, "Bolt");
 
         Assert.False(isValid);
         Assert.Contains("Code is required.", message);
     }
 
     [Fact]
-    public void Validate_ShouldReturnFalse_WhenNameMissing()
+    public void Validate_ShouldFail_WhenCodeIsEmpty()
     {
-        var (isValid, message) = Good.Validate("SKU123", "");
+        var (isValid, message) = Good.Validate("", "Bolt");
+
+        Assert.False(isValid);
+        Assert.Contains("Code is required.", message);
+    }
+
+    [Fact]
+    public void Validate_ShouldFail_WhenNameIsNull()
+    {
+        var (isValid, message) = Good.Validate("B001", null!);
 
         Assert.False(isValid);
         Assert.Contains("Name is required.", message);
     }
 
     [Fact]
-    public void Validate_ShouldReturnFalse_WithBothErrors_WhenBothMissing()
+    public void Validate_ShouldFail_WhenNameIsEmpty()
+    {
+        var (isValid, message) = Good.Validate("B001", "");
+
+        Assert.False(isValid);
+        Assert.Contains("Name is required.", message);
+    }
+
+    [Fact]
+    public void Validate_ShouldFail_WhenBothCodeAndNameAreInvalid()
     {
         var (isValid, message) = Good.Validate("", "");
 
@@ -86,9 +52,18 @@ public class GoodTests
     }
 
     [Fact]
-    public void Validate_ShouldReturnTrue_WhenInputsAreValid()
+    public void Validate_ShouldPass_WhenCodeAndNameAreValid()
     {
-        var (isValid, message) = Good.Validate("SKU123", "Widget");
+        var (isValid, message) = Good.Validate("B001", "Bolt");
+
+        Assert.True(isValid);
+        Assert.Equal(string.Empty, message);
+    }
+
+    [Fact]
+    public void Validate_ShouldPass_WhenCodeAndNameHaveWhitespace()
+    {
+        var (isValid, message) = Good.Validate("  B001  ", "  Bolt  ");
 
         Assert.True(isValid);
         Assert.Equal(string.Empty, message);

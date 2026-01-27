@@ -1,114 +1,104 @@
-using System;
-using System.Linq;
 using ProcureDesk.Domain;
 using ProcureDesk.Infrastructure;
 using Xunit;
 
-namespace ProcureDesk.Tests.Infrastructure;
+namespace ProcureDesk.Tests;
 
-public class MockGoodsRepositoryTests
+public class MockGoodRepositoryTests
 {
     [Fact]
-    public void List_ShouldBeEmpty_WhenNoGoods()
+    public void Add_ShouldStoreGood_AndFindByCodeShouldReturnIt()
     {
-        var repo = new MockGoodsRepository();
-
-        var goods = repo.List();
-
-        Assert.Empty(goods);
-    }
-
-    [Fact]
-    public void Add_ShouldStoreGood()
-    {
-        var repo = new MockGoodsRepository();
-        var good = new Good("SKU001", "Widget A");
+        var repo = new MockGoodRepository();
+        var good = new Good("B001", "Bolt");
 
         repo.Add(good);
 
-        var list = repo.List().ToList();
-        Assert.Single(list);
-        Assert.Equal("SKU001", list[0].Code);
-        Assert.Equal("Widget A", list[0].Name);
+        var found = repo.FindByCode("B001");
+
+        Assert.NotNull(found);
+        Assert.Equal("Bolt", found!.Name);
     }
 
     [Fact]
-    public void Add_ShouldThrow_WhenDuplicateCode()
+    public void FindByCode_ShouldReturnNull_WhenGoodDoesNotExist()
     {
-        var repo = new MockGoodsRepository();
-        repo.Add(new Good("SKU123", "Widget"));
+        var repo = new MockGoodRepository();
 
-        var ex = Assert.Throws<InvalidOperationException>(() =>
-            repo.Add(new Good("SKU123", "Another Widget")));
-
-        Assert.Contains("already exists", ex.Message);
-    }
-
-    [Fact]
-    public void FindByCode_ShouldReturnNull_WhenNotFound()
-    {
-        var repo = new MockGoodsRepository();
-
-        var found = repo.FindByCode("MISSING");
+        var found = repo.FindByCode("X999");
 
         Assert.Null(found);
     }
 
     [Fact]
-    public void FindByCode_ShouldReturnGood_WhenFound()
+    public void List_ShouldReturnAllGoods()
     {
-        var repo = new MockGoodsRepository();
-        repo.Add(new Good("SKU123", "Widget"));
+        var repo = new MockGoodRepository();
+        repo.Add(new Good("B001", "Bolt"));
+        repo.Add(new Good("N001", "Nut"));
 
-        var found = repo.FindByCode("SKU123");
+        var goods = repo.List().ToList();
 
-        Assert.NotNull(found);
-        Assert.Equal("SKU123", found!.Code);
-        Assert.Equal("Widget", found.Name);
+        Assert.Equal(2, goods.Count);
+    }
+
+    [Fact]
+    public void List_ShouldReturnCopy_NotInternalList()
+    {
+        var repo = new MockGoodRepository();
+        repo.Add(new Good("B001", "Bolt"));
+
+        var list = repo.List().ToList();
+        list.Clear(); 
+
+        var goods = repo.List();
+
+        Assert.Single(goods);
     }
 
     [Fact]
     public void Update_ShouldReplaceExistingGood()
     {
-        var repo = new MockGoodsRepository();
-        repo.Add(new Good("SKU123", "Old"));
+        var repo = new MockGoodRepository();
+        var original = new Good("B001", "Bolt");
+        repo.Add(original);
 
-        repo.Update(new Good("SKU123", "New"));
+        var updated = new Good("B001", "Heavy Bolt");
+        repo.Update(updated);
 
-        var updated = repo.FindByCode("SKU123");
-        Assert.NotNull(updated);
-        Assert.Equal("New", updated!.Name);
+        var found = repo.FindByCode("B001");
+
+        Assert.Equal("Heavy Bolt", found!.Name);
     }
 
     [Fact]
-    public void Update_ShouldThrow_WhenGoodNotFound()
+    public void Update_ShouldDoNothing_WhenGoodDoesNotExist()
     {
-        var repo = new MockGoodsRepository();
+        var repo = new MockGoodRepository();
 
-        var ex = Assert.Throws<KeyNotFoundException>(() =>
-            repo.Update(new Good("SKU404", "Missing")));
-
-        Assert.Contains("not found", ex.Message);
-    }
-
-    [Fact]
-    public void Delete_ShouldRemoveGood_WhenExists()
-    {
-        var repo = new MockGoodsRepository();
-        repo.Add(new Good("SKU123", "Widget"));
-
-        repo.Delete("SKU123");
+        repo.Update(new Good("X001", "Ghost Item"));
 
         Assert.Empty(repo.List());
-        Assert.Null(repo.FindByCode("SKU123"));
     }
 
     [Fact]
-    public void Delete_ShouldThrow_WhenGoodNotFound()
+    public void Delete_ShouldRemoveExistingGood()
     {
-        var repo = new MockGoodsRepository();
+        var repo = new MockGoodRepository();
+        repo.Add(new Good("B001", "Bolt"));
 
-        var ex = Assert.Throws<KeyNotFoundException>(() => repo.Delete("SKU404"));
-        Assert.Contains("not found", ex.Message);
+        repo.Delete("B001");
+
+        Assert.Null(repo.FindByCode("B001"));
+    }
+
+    [Fact]
+    public void Delete_ShouldDoNothing_WhenGoodDoesNotExist()
+    {
+        var repo = new MockGoodRepository();
+
+        repo.Delete("X001");
+
+        Assert.Empty(repo.List());
     }
 }

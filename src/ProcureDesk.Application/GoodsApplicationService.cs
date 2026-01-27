@@ -19,7 +19,9 @@ public class GoodsApplicationService
         if (string.IsNullOrWhiteSpace(code))
             return Result<Good>.Fail("Code is required.");
 
-        var good = _repo.FindByCode(code.Trim());
+        var trimmedCode = code.Trim();
+
+        var good = _repo.FindByCode(trimmedCode);
         return good is null
             ? Result<Good>.Fail("Good not found.")
             : Result<Good>.Ok(good);
@@ -28,14 +30,18 @@ public class GoodsApplicationService
     public Result CreateGood(string code, string name)
     {
         var (isValid, message) = Good.Validate(code, name);
-        if (!isValid) return Result.Fail(message);
+        if (!isValid)
+            return Result.Fail(message);
 
-        code = code.Trim();
+        var trimmedCode = code.Trim();
 
-        if (_repo.FindByCode(code) is not null)
+        if (_repo.FindByCode(trimmedCode) is not null)
             return Result.Fail("A good with this code already exists.");
 
-        _repo.Add(new Good(code, name));
+        // You said normalization is outside entity rules; do it here if you want clean data:
+        var trimmedName = name.Trim();
+
+        _repo.Add(new Good(trimmedCode, trimmedName));
         return Result.Ok();
     }
 
@@ -44,20 +50,20 @@ public class GoodsApplicationService
         if (string.IsNullOrWhiteSpace(code))
             return Result.Fail("Code is required.");
 
-        var good = _repo.FindByCode(code.Trim());
+        // Validate update input (your Good.Validate only checks required fields)
+        // We reuse it by passing the existing code + new name.
+        var (isValid, message) = Good.Validate(code, newName);
+        if (!isValid)
+            return Result.Fail(message);
+
+        var trimmedCode = code.Trim();
+
+        var good = _repo.FindByCode(trimmedCode);
         if (good is null)
             return Result.Fail("Good not found.");
 
-        // Domain behavior enforces rules and trims
-        try
-        {
-            good.Rename(newName);
-        }
-        catch (ArgumentException ex)
-        {
-            // Convert domain exception into a friendly app error
-            return Result.Fail(ex.Message);
-        }
+        // No domain method, no exceptions, just assignment (normalize here if desired)
+        good.Name = newName.Trim();
 
         _repo.Update(good);
         return Result.Ok();
@@ -68,14 +74,14 @@ public class GoodsApplicationService
         if (string.IsNullOrWhiteSpace(code))
             return Result.Fail("Code is required.");
 
-        try
-        {
-            _repo.Delete(code.Trim());
-            return Result.Ok();
-        }
-        catch (KeyNotFoundException)
-        {
+        var trimmedCode = code.Trim();
+
+        // Don’t rely on exceptions; check first
+        var good = _repo.FindByCode(trimmedCode);
+        if (good is null)
             return Result.Fail("Good not found.");
-        }
+
+        _repo.Delete(trimmedCode);
+        return Result.Ok();
     }
 }

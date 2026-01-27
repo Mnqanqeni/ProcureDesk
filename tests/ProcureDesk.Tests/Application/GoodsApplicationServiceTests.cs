@@ -7,12 +7,12 @@ namespace ProcureDesk.Tests.Application;
 
 public class GoodsApplicationServiceTests
 {
-    private readonly MockGoodsRepository _repo;
+    private readonly MockGoodRepository _repo;
     private readonly GoodsApplicationService _service;
 
     public GoodsApplicationServiceTests()
     {
-        _repo = new MockGoodsRepository();
+        _repo = new MockGoodRepository();
         _service = new GoodsApplicationService(_repo);
     }
 
@@ -72,19 +72,7 @@ public class GoodsApplicationServiceTests
         Assert.False(result.IsSuccess);
         Assert.Equal("Good not found.", result.Error);
     }
-
-    [Fact]
-    public void RenameGood_ShouldFail_WhenNewNameInvalid()
-    {
-        _service.CreateGood("SKU123", "Old Name");
-
-        var result = _service.RenameGood("SKU123", "");
-
-        Assert.False(result.IsSuccess);
-        // Domain throws: "Name cannot be null or empty."
-        Assert.Contains("Name cannot be null or empty.", result.Error);
-    }
-
+  
     [Fact]
     public void DeleteGood_ShouldSucceed_WhenGoodExists()
     {
