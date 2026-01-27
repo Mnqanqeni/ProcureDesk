@@ -3,94 +3,178 @@ using ProcureDesk.Domain;
 using ProcureDesk.Infrastructure;
 using Xunit;
 
-namespace ProcureDesk.Tests.Application;
+namespace ProcureDesk.Tests;
 
 public class GoodsApplicationServiceTests
 {
-    private readonly MockGoodRepository _repo;
-    private readonly GoodsApplicationService _service;
-
-    public GoodsApplicationServiceTests()
-    {
-        _repo = new MockGoodRepository();
-        _service = new GoodsApplicationService(_repo);
-    }
-
     [Fact]
-    public void CreateGood_ShouldSucceed_WhenValidAndUnique()
+    public void ListGoods_ShouldReturnAllGoods()
     {
-        var result = _service.CreateGood("SKU123", "Widget");
+        var repo = new MockGoodRepository();
+        repo.Add(new Good("B001", "Bolt"));
+        repo.Add(new Good("N001", "Nut"));
+
+        var service = new GoodsApplicationService(repo);
+
+        var result = service.ListGoods();
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(string.Empty, result.Error);
-
-        var stored = _repo.FindByCode("SKU123");
-        Assert.NotNull(stored);
-        Assert.Equal("Widget", stored!.Name);
+        Assert.Equal(2, result.Value!.Count());
     }
 
     [Fact]
-    public void CreateGood_ShouldFail_WhenDuplicateCode()
+    public void GetGoodByCode_ShouldFail_WhenCodeIsEmpty()
     {
-        _service.CreateGood("SKU123", "Widget");
+        var service = new GoodsApplicationService(new MockGoodRepository());
 
-        var result = _service.CreateGood("SKU123", "Another Widget");
+        var result = service.GetGoodByCode("  ");
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("Code is required.", result.Error);
+    }
+
+    [Fact]
+    public void GetGoodByCode_ShouldFail_WhenGoodNotFound()
+    {
+        var service = new GoodsApplicationService(new MockGoodRepository());
+
+        var result = service.GetGoodByCode("B001");
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("Good not found.", result.Error);
+    }
+
+    [Fact]
+    public void GetGoodByCode_ShouldReturnGood_WhenFound()
+    {
+        var repo = new MockGoodRepository();
+        repo.Add(new Good("B001", "Bolt"));
+        var service = new GoodsApplicationService(repo);
+
+        var result = service.GetGoodByCode("B001");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("B001", result.Value!.Code);
+        Assert.Equal("Bolt", result.Value!.Name);
+    }
+
+    [Fact]
+    public void CreateGood_ShouldFail_WhenValidationFails()
+    {
+        var service = new GoodsApplicationService(new MockGoodRepository());
+
+        var result = service.CreateGood("", "");
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("Code is required.", result.Error);
+        Assert.Contains("Name is required.", result.Error);
+    }
+
+    [Fact]
+    public void CreateGood_ShouldFail_WhenCodeAlreadyExists()
+    {
+        var repo = new MockGoodRepository();
+        repo.Add(new Good("B001", "Bolt"));
+        var service = new GoodsApplicationService(repo);
+
+        var result = service.CreateGood("B001", "Another Bolt");
 
         Assert.False(result.IsSuccess);
         Assert.Equal("A good with this code already exists.", result.Error);
     }
 
     [Fact]
-    public void CreateGood_ShouldFail_WhenInvalidInput()
+    public void CreateGood_ShouldAddGood_WhenValid()
     {
-        var result = _service.CreateGood("", "Widget");
+        var repo = new MockGoodRepository();
+        var service = new GoodsApplicationService(repo);
 
-        Assert.False(result.IsSuccess);
-        Assert.Contains("Code is required.", result.Error);
+        var result = service.CreateGood("B001", "Bolt");
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(repo.FindByCode("B001"));
     }
 
     [Fact]
-    public void RenameGood_ShouldSucceed_WhenGoodExists_AndNewNameValid()
+    public void RenameGood_ShouldFail_WhenCodeIsEmpty()
     {
-        _service.CreateGood("SKU123", "Old Name");
+        var service = new GoodsApplicationService(new MockGoodRepository());
 
-        var result = _service.RenameGood("SKU123", "New Name");
+        var result = service.RenameGood(" ", "New Name");
 
-        Assert.True(result.IsSuccess);
-        Assert.Equal(string.Empty, result.Error);
-
-        var updated = _repo.FindByCode("SKU123");
-        Assert.NotNull(updated);
-        Assert.Equal("New Name", updated!.Name);
+        Assert.False(result.IsSuccess);
+        Assert.Equal("Code is required.", result.Error);
     }
 
     [Fact]
     public void RenameGood_ShouldFail_WhenGoodNotFound()
     {
-        var result = _service.RenameGood("SKU999", "New Name");
+        var service = new GoodsApplicationService(new MockGoodRepository());
+
+        var result = service.RenameGood("B001", "New Name");
 
         Assert.False(result.IsSuccess);
         Assert.Equal("Good not found.", result.Error);
     }
-  
-    [Fact]
-    public void DeleteGood_ShouldSucceed_WhenGoodExists()
-    {
-        _service.CreateGood("SKU123", "Widget");
 
-        var result = _service.DeleteGood("SKU123");
+    [Fact]
+    public void RenameGood_ShouldFail_WhenNewNameInvalid()
+    {
+        var repo = new MockGoodRepository();
+        repo.Add(new Good("B001", "Bolt"));
+        var service = new GoodsApplicationService(repo);
+
+        var result = service.RenameGood("B001", "");
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("Name is required.", result.Error);
+    }
+
+    [Fact]
+    public void RenameGood_ShouldUpdateName_WhenValid()
+    {
+        var repo = new MockGoodRepository();
+        repo.Add(new Good("B001", "Bolt"));
+        var service = new GoodsApplicationService(repo);
+
+        var result = service.RenameGood("B001", "Heavy Bolt");
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(string.Empty, result.Error);
-        Assert.Null(_repo.FindByCode("SKU123"));
+        Assert.Equal("Heavy Bolt", repo.FindByCode("B001")!.Name);
+    }
+
+    [Fact]
+    public void DeleteGood_ShouldFail_WhenCodeIsEmpty()
+    {
+        var service = new GoodsApplicationService(new MockGoodRepository());
+
+        var result = service.DeleteGood(" ");
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal("Code is required.", result.Error);
     }
 
     [Fact]
     public void DeleteGood_ShouldFail_WhenGoodNotFound()
     {
-        var result = _service.DeleteGood("SKU404");
+        var service = new GoodsApplicationService(new MockGoodRepository());
+
+        var result = service.DeleteGood("B001");
 
         Assert.False(result.IsSuccess);
         Assert.Equal("Good not found.", result.Error);
+    }
+
+    [Fact]
+    public void DeleteGood_ShouldDelete_WhenGoodExists()
+    {
+        var repo = new MockGoodRepository();
+        repo.Add(new Good("B001", "Bolt"));
+        var service = new GoodsApplicationService(repo);
+
+        var result = service.DeleteGood("B001");
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(repo.FindByCode("B001"));
     }
 }
