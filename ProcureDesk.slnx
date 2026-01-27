@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ProcureDesk.Api/ProcureDesk.Api.csproj" />
+    <Project Path="src/ProcureDesk.Application/ProcureDesk.Application.csproj" />
+    <Project Path="src/ProcureDesk.Domain/ProcureDesk.Domain.csproj" />
+    <Project Path="src/ProcureDesk.Infrastructure/ProcureDesk.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ProcureDesk.Tests/ProcureDesk.Tests.csproj" />
+  </Folder>
+  
+</Solution>
