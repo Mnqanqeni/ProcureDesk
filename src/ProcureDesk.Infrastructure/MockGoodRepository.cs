@@ -7,7 +7,7 @@ public class MockGoodRepository : IGoodRepository
     private readonly List<Good> _goods = new();
 
     public IEnumerable<Good> List()
-        => _goods.ToList(); // return copy to avoid external modification
+        => _goods.ToList();
 
     public Good? FindByCode(string code)
         => _goods.FirstOrDefault(g => g.Code == code);

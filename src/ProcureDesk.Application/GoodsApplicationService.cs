@@ -11,77 +11,77 @@ public class GoodsApplicationService
         _repo = repo;
     }
 
-    public Result<IEnumerable<Good>> ListGoods()
-        => Result<IEnumerable<Good>>.Ok(_repo.List());
+    public (bool IsSuccess, IEnumerable<Good>? Value, string Error) ListGoods()
+        => (true, _repo.List(), string.Empty);
 
-    public Result<Good> GetGoodByCode(string code)
+    public (bool IsSuccess, Good? Value, string Error) GetGoodByCode(string code)
     {
         if (string.IsNullOrWhiteSpace(code))
-            return Result<Good>.Fail("Code is required.");
+            return (false, default(Good), "Code is required.");
 
         var trimmedCode = code.Trim();
 
         var good = _repo.FindByCode(trimmedCode);
         return good is null
-            ? Result<Good>.Fail("Good not found.")
-            : Result<Good>.Ok(good);
+            ? (false, default(Good), "Good not found.")
+            : (true, good, string.Empty);
     }
 
-    public Result CreateGood(string code, string name)
+    public (bool IsSuccess, string Error) CreateGood(string code, string name)
     {
         var (isValid, message) = Good.Validate(code, name);
         if (!isValid)
-            return Result.Fail(message);
+            return (false, message);
 
         var trimmedCode = code.Trim();
 
         if (_repo.FindByCode(trimmedCode) is not null)
-            return Result.Fail("A good with this code already exists.");
+            return (false, "A good with this code already exists.");
 
         // You said normalization is outside entity rules; do it here if you want clean data:
         var trimmedName = name.Trim();
 
         _repo.Add(new Good(trimmedCode, trimmedName));
-        return Result.Ok();
+        return (true, string.Empty);
     }
 
-    public Result RenameGood(string code, string newName)
+    public (bool IsSuccess, string Error) RenameGood(string code, string newName)
     {
         if (string.IsNullOrWhiteSpace(code))
-            return Result.Fail("Code is required.");
+            return (false, "Code is required.");
 
         // Validate update input (your Good.Validate only checks required fields)
         // We reuse it by passing the existing code + new name.
         var (isValid, message) = Good.Validate(code, newName);
         if (!isValid)
-            return Result.Fail(message);
+            return (false, message);
 
         var trimmedCode = code.Trim();
 
         var good = _repo.FindByCode(trimmedCode);
         if (good is null)
-            return Result.Fail("Good not found.");
+            return (false, "Good not found.");
 
         // No domain method, no exceptions, just assignment (normalize here if desired)
         good.Name = newName.Trim();
 
         _repo.Update(good);
-        return Result.Ok();
+        return (true, string.Empty);
     }
 
-    public Result DeleteGood(string code)
+    public (bool IsSuccess, string Error) DeleteGood(string code)
     {
         if (string.IsNullOrWhiteSpace(code))
-            return Result.Fail("Code is required.");
+            return (false, "Code is required.");
 
         var trimmedCode = code.Trim();
 
         // Don’t rely on exceptions; check first
         var good = _repo.FindByCode(trimmedCode);
         if (good is null)
-            return Result.Fail("Good not found.");
+            return (false, "Good not found.");
 
         _repo.Delete(trimmedCode);
-        return Result.Ok();
+        return (true, string.Empty);
     }
 }
