@@ -1,0 +1,8 @@
+{
+  "dotnet-test-explorer.testProjectPath": "**/*Tests.csproj",
+  "dotnet-test-explorer.runSettingsPath": ".runsettings",
+  "dotnet-test-explorer.useVsCodeTestExplorer": true,
+  "dotnet-test-explorer.autoWatch": true,
+  "dotnet-test-explorer.testArguments": "--logger \"console;verbosity=detailed\"",
+  "dotnet-test-explorer.parallelTestExecution": true
+}
