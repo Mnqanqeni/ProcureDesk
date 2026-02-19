@@ -1,34 +1,33 @@
 using ProcureDesk.Domain;
-
-namespace ProcureDesk.Infrastructure;
+using System.Collections.Generic;
 
 public class MockSupplierRepository : ISupplierRepository
 {
-    private readonly List<Supplier> _suppliers = new();
+    private readonly Dictionary<string, Supplier> _suppliers = new();
 
-    public IEnumerable<Supplier> List()
-        => _suppliers.ToList();
+    public IEnumerable<Supplier> List() => _suppliers.Values;
 
-    public Supplier? FindByCode(string code)
-        => _suppliers.FirstOrDefault(s => s.Code == code);
+    public Supplier? GetByCode(string code)
+        => _suppliers.TryGetValue(code, out var supplier) ? supplier : null;
 
     public void Add(Supplier supplier)
-        => _suppliers.Add(supplier);
+    {
+        if (_suppliers.ContainsKey(supplier.Code))
+            throw new InvalidOperationException($"Supplier with code '{supplier.Code}' already exists.");
+
+        _suppliers[supplier.Code] = supplier;
+    }
 
     public void Update(Supplier supplier)
     {
-        var existing = FindByCode(supplier.Code);
-        if (existing is not null)
-        {
-            _suppliers.Remove(existing);
-            _suppliers.Add(supplier);
-        }
+        if (!_suppliers.ContainsKey(supplier.Code))
+            throw new KeyNotFoundException($"Supplier with code '{supplier.Code}' not found.");
+
+        _suppliers[supplier.Code] = supplier;
     }
 
     public void Delete(string code)
     {
-        var existing = FindByCode(code);
-        if (existing is not null)
-            _suppliers.Remove(existing);
+        _suppliers.Remove(code);
     }
 }

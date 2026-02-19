@@ -1,82 +1,61 @@
-using ProcureDesk.Domain;
-
 namespace ProcureDesk.Application;
+
+using ProcureDesk.Domain;
 
 public class SuppliersApplicationService
 {
-    private readonly ISupplierRepository _repo;
+    private readonly ISupplierRepository _suppliers;
 
-    public SuppliersApplicationService(ISupplierRepository repo)
+    public SuppliersApplicationService(ISupplierRepository suppliers)
     {
-        _repo = repo;
+        _suppliers = suppliers;
     }
 
-    public (bool IsSuccess, IEnumerable<Supplier>? Value, string Error) ListSuppliers()
-        => (true, _repo.List(), string.Empty);
+    public IEnumerable<Supplier> List() => _suppliers.List();
 
-    public (bool IsSuccess, Supplier? Value, string Error) GetSupplierByCode(string code)
+    public Supplier? GetByCode(string code) => _suppliers.GetByCode(code);
+
+    public (bool ok, List<string> errors, Supplier? supplier)
+        Create(string code, string name, string user)
     {
-        if (string.IsNullOrWhiteSpace(code))
-            return (false, default(Supplier), "Code is required.");
 
-        var trimmed = code.Trim();
+        var (isValid, errors, supplier) = Supplier.Create(code, name, user);
+        if (!isValid) return (false, errors, null);
 
-        var supplier = _repo.FindByCode(trimmed);
-        return supplier is null
-            ? (false, default(Supplier), "Supplier not found.")
-            : (true, supplier, string.Empty);
+        if (_suppliers.GetByCode(code) != null)
+            return (false, new List<string> { "Supplier code already exists." }, null);
+
+        _suppliers.Add(supplier!);
+
+        return (true, new List<string>(), supplier);
     }
 
-    public (bool IsSuccess, string Error) CreateSupplier(string code, string name)
+    public (bool ok, List<string> errors)
+        UpdateName(string code, string newName, string user)
     {
-        var (isValid, message) = Supplier.Validate(code, name);
-        if (!isValid)
-            return (false, message);
-
-        var trimmedCode = code.Trim();
-        var trimmedName = name.Trim();
-
-        if (_repo.FindByCode(trimmedCode) is not null)
-            return (false, "A supplier with this code already exists.");
-
-        _repo.Add(new Supplier(trimmedCode, trimmedName));
-        return (true, string.Empty);
-    }
-
-    public (bool IsSuccess, string Error) RenameSupplier(string code, string newName)
-    {
-        if (string.IsNullOrWhiteSpace(code))
-            return (false, "Code is required.");
-
-        // Reuse Supplier.Validate: same required rules
-        var (isValid, message) = Supplier.Validate(code, newName);
-        if (!isValid)
-            return (false, message);
-
-        var trimmedCode = code.Trim();
-
-        var supplier = _repo.FindByCode(trimmedCode);
+        var supplier = _suppliers.GetByCode(code);
         if (supplier is null)
-            return (false, "Supplier not found.");
+            return (false, new List<string> { "Supplier not found." });
 
-        supplier.Name = newName.Trim();
-        _repo.Update(supplier);
+        var (isValid, errors) = Supplier.Validate(supplier.Code, newName);
+        if (!isValid) return (false, errors);
 
-        return (true, string.Empty);
+        supplier.Name = newName;
+        supplier.EditUser = user;
+        supplier.EditDate = DateTime.UtcNow;
+
+        _suppliers.Update(supplier);
+
+        return (true, new List<string>());
     }
 
-    public (bool IsSuccess, string Error) DeleteSupplier(string code)
+    public (bool ok, List<string> errors)
+        Delete(string code)
     {
-        if (string.IsNullOrWhiteSpace(code))
-            return (false, "Code is required.");
+        if (_suppliers.GetByCode(code) is null)
+            return (false, new List<string> { "Supplier not found." });
 
-        var trimmedCode = code.Trim();
-
-        var supplier = _repo.FindByCode(trimmedCode);
-        if (supplier is null)
-            return (false, "Supplier not found.");
-
-        _repo.Delete(trimmedCode);
-        return (true, string.Empty);
+        _suppliers.Delete(code);
+        return (true, new List<string>());
     }
 }

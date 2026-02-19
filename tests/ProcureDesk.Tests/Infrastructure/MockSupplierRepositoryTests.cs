@@ -1,5 +1,7 @@
 using ProcureDesk.Domain;
 using ProcureDesk.Infrastructure;
+using System.Linq;
+using System.Collections.Generic;
 using Xunit;
 
 namespace ProcureDesk.Tests;
@@ -7,14 +9,15 @@ namespace ProcureDesk.Tests;
 public class MockSupplierRepositoryTests
 {
     [Fact]
-    public void Add_ShouldStoreSupplier_AndFindByCodeShouldReturnIt()
+    public void Add_ShouldStoreSupplier_AndGetByCodeShouldReturnIt()
     {
         var repo = new MockSupplierRepository();
-        var supplier = new Supplier("S001", "ACME");
+        var (ok, errors, supplier) = Supplier.Create("S001", "ACME", "test");
+        Assert.True(ok);
 
-        repo.Add(supplier);
+        repo.Add(supplier!);
 
-        var found = repo.FindByCode("S001");
+        var found = repo.GetByCode("S001");
 
         Assert.NotNull(found);
         Assert.Equal("S001", found!.Code);
@@ -22,11 +25,11 @@ public class MockSupplierRepositoryTests
     }
 
     [Fact]
-    public void FindByCode_ShouldReturnNull_WhenSupplierDoesNotExist()
+    public void GetByCode_ShouldReturnNull_WhenSupplierDoesNotExist()
     {
         var repo = new MockSupplierRepository();
 
-        var found = repo.FindByCode("S999");
+        var found = repo.GetByCode("S999");
 
         Assert.Null(found);
     }
@@ -35,8 +38,10 @@ public class MockSupplierRepositoryTests
     public void List_ShouldReturnAllSuppliers()
     {
         var repo = new MockSupplierRepository();
-        repo.Add(new Supplier("S001", "ACME"));
-        repo.Add(new Supplier("S002", "BoltCo"));
+        var (ok1, e1, s1) = Supplier.Create("S001", "ACME", "test");
+        var (ok2, e2, s2) = Supplier.Create("S002", "BoltCo", "test");
+        repo.Add(s1!);
+        repo.Add(s2!);
 
         var suppliers = repo.List().ToList();
 
@@ -49,7 +54,8 @@ public class MockSupplierRepositoryTests
     public void List_ShouldReturnCopy_NotInternalList()
     {
         var repo = new MockSupplierRepository();
-        repo.Add(new Supplier("S001", "ACME"));
+        var (ok, err, s) = Supplier.Create("S001", "ACME", "test");
+        repo.Add(s!);
 
         var list = repo.List().ToList();
         list.Clear(); // modify returned list
@@ -61,11 +67,13 @@ public class MockSupplierRepositoryTests
     public void Update_ShouldReplaceExistingSupplier()
     {
         var repo = new MockSupplierRepository();
-        repo.Add(new Supplier("S001", "ACME"));
+        var (ok, e, original) = Supplier.Create("S001", "ACME", "test");
+        repo.Add(original!);
 
-        repo.Update(new Supplier("S001", "ACME SA"));
+        var (ok2, e2, updated) = Supplier.Create("S001", "ACME SA", "test");
+        repo.Update(updated!);
 
-        var found = repo.FindByCode("S001");
+        var found = repo.GetByCode("S001");
 
         Assert.NotNull(found);
         Assert.Equal("ACME SA", found!.Name);
@@ -76,20 +84,21 @@ public class MockSupplierRepositoryTests
     {
         var repo = new MockSupplierRepository();
 
-        repo.Update(new Supplier("S001", "ACME"));
+        var (ok, e, s) = Supplier.Create("S001", "ACME", "test");
 
-        Assert.Empty(repo.List());
+        Assert.Throws<KeyNotFoundException>(() => repo.Update(s!));
     }
 
     [Fact]
     public void Delete_ShouldRemoveExistingSupplier()
     {
         var repo = new MockSupplierRepository();
-        repo.Add(new Supplier("S001", "ACME"));
+        var (ok, e, s) = Supplier.Create("S001", "ACME", "test");
+        repo.Add(s!);
 
         repo.Delete("S001");
 
-        Assert.Null(repo.FindByCode("S001"));
+        Assert.Null(repo.GetByCode("S001"));
         Assert.Empty(repo.List());
     }
 

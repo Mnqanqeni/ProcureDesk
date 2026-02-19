@@ -18,7 +18,6 @@ public class PurchaseOrder
 
     private PurchaseOrder() { }
 
-    // ---------------- CREATE ----------------
 
     public static (bool isValid, List<string> errors, PurchaseOrder? order)
         Create(
@@ -56,7 +55,6 @@ public class PurchaseOrder
         });
     }
 
-    // ---------------- VALIDATE ----------------
 
     public static (bool isValid, List<string> errors)
         Validate(string orderNumber, string supplierCode)
@@ -72,7 +70,6 @@ public class PurchaseOrder
         return (errors.Count == 0, errors);
     }
 
-    // ---------------- ADD LINE ----------------
 
     public (bool ok, List<string> errors)
         AddLine(Product product, int quantity, decimal price, string user)
@@ -94,7 +91,6 @@ public class PurchaseOrder
         return (true, errors);
     }
 
-    // ---------------- REMOVE LINE ----------------
 
     public (bool ok, List<string> errors)
         RemoveLine(Guid lineId, string user)
@@ -120,7 +116,6 @@ public class PurchaseOrder
         return (true, errors);
     }
 
-    // ---------------- UPDATE QUANTITY ----------------
 
     public (bool ok, List<string> errors)
         UpdateLineQuantity(Guid lineId, int quantity, string user)
@@ -146,7 +141,6 @@ public class PurchaseOrder
         return (true, errors);
     }
 
-    // ---------------- UPDATE PRICE ----------------
 
     public (bool ok, List<string> errors)
         UpdateLinePrice(Guid lineId, decimal price, string user)
@@ -172,7 +166,7 @@ public class PurchaseOrder
         return (true, errors);
     }
 
-    // ---------------- SUBMIT ----------------
+   
 
     public (bool ok, List<string> errors)
         Submit(string user)
@@ -194,7 +188,7 @@ public class PurchaseOrder
         return (true, errors);
     }
 
-    // ---------------- CANCEL ----------------
+    
 
     public (bool ok, List<string> errors)
         Cancel(string user)
@@ -213,7 +207,7 @@ public class PurchaseOrder
         return (true, errors);
     }
 
-    // ---------------- HELPER ----------------
+  
 
     private void Touch(string user)
     {

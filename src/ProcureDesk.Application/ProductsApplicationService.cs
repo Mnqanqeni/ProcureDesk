@@ -1,87 +1,61 @@
-﻿using ProcureDesk.Domain;
+﻿namespace ProcureDesk.Application;
 
-namespace ProcureDesk.Application;
+using ProcureDesk.Domain;
 
-public class GoodsApplicationService
+public class ProductApplicationService
 {
-    private readonly IGoodRepository _repo;
+    private readonly IProductRepository _products;
 
-    public GoodsApplicationService(IGoodRepository repo)
+    public ProductApplicationService(IProductRepository products)
     {
-        _repo = repo;
+        _products = products;
     }
 
-    public (bool IsSuccess, IEnumerable<Good>? Value, string Error) ListGoods()
-        => (true, _repo.List(), string.Empty);
+    public IEnumerable<Product> List() => _products.List();
 
-    public (bool IsSuccess, Good? Value, string Error) GetGoodByCode(string code)
+    public Product? GetByCode(string code) => _products.GetByCode(code);
+
+    public (bool ok, List<string> errors, Product? product)
+        Create(string code, string name, string user)
     {
-        if (string.IsNullOrWhiteSpace(code))
-            return (false, default(Good), "Code is required.");
+     
+        var (isValid, errors, product) = Product.Create(code, name, user);
+        if (!isValid) return (false, errors, null);
 
-        var trimmedCode = code.Trim();
+        if (_products.GetByCode(code) != null)
+            return (false, new List<string> { "Product code already exists." }, null);
 
-        var good = _repo.FindByCode(trimmedCode);
-        return good is null
-            ? (false, default(Good), "Good not found.")
-            : (true, good, string.Empty);
+        _products.Add(product!);
+
+        return (true, new List<string>(), product);
     }
 
-    public (bool IsSuccess, string Error) CreateGood(string code, string name)
+    public (bool ok, List<string> errors)
+        UpdateName(string code, string newName, string user)
     {
-        var (isValid, message) = Good.Validate(code, name);
-        if (!isValid)
-            return (false, message);
+        var product = _products.GetByCode(code);
+        if (product is null)
+            return (false, new List<string> { "Product not found." });
 
-        var trimmedCode = code.Trim();
+        var (isValid, errors) = Product.Validate(product.Code, newName);
+        if (!isValid) return (false, errors);
 
-        if (_repo.FindByCode(trimmedCode) is not null)
-            return (false, "A good with this code already exists.");
+        product.Name = newName;
+        product.EditUser = user;
+        product.EditDate = DateTime.UtcNow;
 
-        // You said normalization is outside entity rules; do it here if you want clean data:
-        var trimmedName = name.Trim();
+        _products.Update(product);
 
-        _repo.Add(new Good(trimmedCode, trimmedName));
-        return (true, string.Empty);
+        return (true, new List<string>());
     }
 
-    public (bool IsSuccess, string Error) RenameGood(string code, string newName)
+    public (bool ok, List<string> errors)
+        Delete(string code)
     {
-        if (string.IsNullOrWhiteSpace(code))
-            return (false, "Code is required.");
+        if (_products.GetByCode(code) is null)
+            return (false, new List<string> { "Product not found." });
 
-        // Validate update input (your Good.Validate only checks required fields)
-        // We reuse it by passing the existing code + new name.
-        var (isValid, message) = Good.Validate(code, newName);
-        if (!isValid)
-            return (false, message);
-
-        var trimmedCode = code.Trim();
-
-        var good = _repo.FindByCode(trimmedCode);
-        if (good is null)
-            return (false, "Good not found.");
-
-        // No domain method, no exceptions, just assignment (normalize here if desired)
-        good.Name = newName.Trim();
-
-        _repo.Update(good);
-        return (true, string.Empty);
-    }
-
-    public (bool IsSuccess, string Error) DeleteGood(string code)
-    {
-        if (string.IsNullOrWhiteSpace(code))
-            return (false, "Code is required.");
-
-        var trimmedCode = code.Trim();
-
-        // Don’t rely on exceptions; check first
-        var good = _repo.FindByCode(trimmedCode);
-        if (good is null)
-            return (false, "Good not found.");
-
-        _repo.Delete(trimmedCode);
-        return (true, string.Empty);
+        _products.Delete(code);
+        return (true, new List<string>());
     }
 }
