@@ -6,19 +6,30 @@ namespace ProcureDesk.Tests;
 public class ProductTests
 {
 	[Fact]
-	public void Product_Validate_Fails_WhenCodeMissing()
+	public void Product_Create_Fails_WhenCodeMissing()
 	{
-		var (isValid, errors) = Product.Validate("", "Widget");
+		var (isValid, errors, product) = Product.Create("", "Widget", "tester");
 		Assert.False(isValid);
 		Assert.Contains("Code is required.", errors);
+		Assert.Null(product);
 	}
 
 	[Fact]
-	public void Product_Validate_Fails_WhenNameMissing()
+	public void Product_Create_Fails_WhenNameMissing()
 	{
-		var (isValid, errors) = Product.Validate("P001", "");
+		var (isValid, errors, product) = Product.Create("P001", "", "tester");
 		Assert.False(isValid);
 		Assert.Contains("Name is required.", errors);
+		Assert.Null(product);
+	}
+
+	[Fact]
+	public void Product_Create_Fails_WhenUserMissing()
+	{
+		var (isValid, errors, product) = Product.Create("P001", "Widget", "");
+		Assert.False(isValid);
+		Assert.Contains("User is required.", errors);
+		Assert.Null(product);
 	}
 
 	[Fact]

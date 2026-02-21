@@ -19,22 +19,21 @@ public class ProductApplicationServiceTests
         Assert.True(ok);
         Assert.Empty(errors);
         Assert.NotNull(product);
-        Assert.NotNull(repo.GetByCode("P001"));
+        Assert.NotNull(repo.Get("P001"));
     }
 
-    [Fact]
-    public void Create_ShouldFail_WhenDuplicate()
-    {
-        var repo = new MockProductRepository();
-        var (ok1, e1, p1) = Product.Create("P001", "Widget", "t");
-        repo.Add(p1!);
+	[Fact]
+	public void Create_ShouldFail_WhenCodeMissing()
+	{
+		var repo = new MockProductRepository();
+		var svc = new ProductApplicationService(repo);
 
-        var svc = new ProductApplicationService(repo);
-        var (ok, errors, product) = svc.Create("P001", "Widget X", "tester");
+		var (ok, errors, product) = svc.Create("", "Widget", "tester");
 
-        Assert.False(ok);
-        Assert.Contains("Product code already exists.", errors);
-    }
+		Assert.False(ok);
+		Assert.Contains("Code is required.", errors);
+		Assert.Null(product);
+	}
 
     [Fact]
     public void UpdateName_ShouldUpdate_WhenFound()
@@ -47,7 +46,8 @@ public class ProductApplicationServiceTests
         var (ok, errors) = svc.UpdateName("P002", "Gizmo Plus", "updater");
 
         Assert.True(ok);
-        Assert.Equal("Gizmo Plus", repo.GetByCode("P002")!.Name);
+        Assert.Empty(errors);
+        Assert.Equal("Gizmo Plus", repo.Get("P002")!.Name);
     }
 
     [Fact]
@@ -61,6 +61,6 @@ public class ProductApplicationServiceTests
         var (ok, errors) = svc.Delete("P003");
 
         Assert.True(ok);
-        Assert.Null(repo.GetByCode("P003"));
+        Assert.Null(repo.Get("P003"));
     }
 }

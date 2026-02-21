@@ -17,7 +17,7 @@ public class MockProductRepositoryTests
 
         repo.Add(product!);
 
-        var found = repo.GetByCode("B001");
+        var found = repo.Get("B001");
 
         Assert.NotNull(found);
         Assert.Equal("Bolt", found!.Name);
@@ -28,7 +28,7 @@ public class MockProductRepositoryTests
     {
         var repo = new MockProductRepository();
 
-        var found = repo.GetByCode("X999");
+        var found = repo.Get("X999");
 
         Assert.Null(found);
     }
@@ -42,7 +42,7 @@ public class MockProductRepositoryTests
         repo.Add(p1!);
         repo.Add(p2!);
 
-        var goods = repo.List().ToList();
+        var goods = repo.GetAll().ToList();
 
         Assert.Equal(2, goods.Count);
     }
@@ -54,10 +54,10 @@ public class MockProductRepositoryTests
         var (ok, e, p) = Product.Create("B001", "Bolt", "test");
         repo.Add(p!);
 
-        var list = repo.List().ToList();
+        var list = repo.GetAll().ToList();
         list.Clear(); 
 
-        var goods = repo.List();
+        var goods = repo.GetAll();
 
         Assert.Single(goods);
     }
@@ -72,7 +72,7 @@ public class MockProductRepositoryTests
         var (ok2, e2, updated) = Product.Create("B001", "Heavy Bolt", "test");
         repo.Update(updated!);
 
-        var found = repo.GetByCode("B001");
+        var found = repo.Get("B001");
 
         Assert.Equal("Heavy Bolt", found!.Name);
     }
@@ -96,7 +96,7 @@ public class MockProductRepositoryTests
 
         repo.Delete("B001");
 
-        Assert.Null(repo.GetByCode("B001"));
+        Assert.Null(repo.Get("B001"));
     }
 
     [Fact]
@@ -106,6 +106,6 @@ public class MockProductRepositoryTests
 
         repo.Delete("X001");
 
-        Assert.Empty(repo.List());
+        Assert.Empty(repo.GetAll());
     }
 }
