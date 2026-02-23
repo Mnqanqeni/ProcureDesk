@@ -1,8 +1,27 @@
+using Scalar.AspNetCore;
+using ProcureDesk.Domain;
+using ProcureDesk.Application;
+using ProcureDesk.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Register repositories
+builder.Services.AddSingleton<IProductRepository, MockProductRepository>();
+builder.Services.AddSingleton<ISupplierRepository, MockSupplierRepository>();
+builder.Services.AddSingleton<IPurchaseOrderRepository, MockPurchaseOrderRepository>();
+builder.Services.AddSingleton<ISupplierProductRepository, MockSupplierProductRepository>();
+
+// Register application services
+builder.Services.AddScoped<ProductApplicationService>();
+builder.Services.AddScoped<SuppliersApplicationService>();
+// builder.Services.AddScoped<PurchaseOrdersApplicationService>();
+builder.Services.AddScoped<SupplierProductApplicationService>();
 
 var app = builder.Build();
 
@@ -10,32 +29,23 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProcureDesk API v1");
+        c.RoutePrefix = "swagger";
+    });
+
+    // Scalar UI
+    app.MapScalarApiReference(options =>
+    {
+        options.OpenApiRoutePattern = "/openapi/v1.json";
+        options.Title = "ProcureDesk API";
+    });
 }
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.MapControllers();
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
