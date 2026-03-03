@@ -1,4 +1,5 @@
-﻿using ProcureDesk.Domain;
+﻿using ProcureDesk.Domain.Abstractions;
+using ProcureDesk.Domain;
 using System.Collections.Generic;
 
 public class MockProductRepository : IProductRepository

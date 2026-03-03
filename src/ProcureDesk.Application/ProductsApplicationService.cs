@@ -1,7 +1,6 @@
-﻿namespace ProcureDesk.Application;
-
+﻿using ProcureDesk.Domain.Abstractions;
 using ProcureDesk.Domain;
-
+namespace ProcureDesk.Application;
 public class ProductApplicationService
 {
     private readonly IProductRepository _productRepository;

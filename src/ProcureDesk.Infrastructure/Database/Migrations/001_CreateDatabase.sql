@@ -1,0 +1,5 @@
+IF DB_ID('ProcureDesk') IS NULL
+BEGIN
+    CREATE DATABASE ProcureDesk;
+END
+GO

@@ -2,7 +2,7 @@
 
 public class Product
 {
-    public  string Code { get; init; }= null!;
+    public string Code { get; init; }= null!;
     public string Name { get; private set; }= null!;
 
     public DateTime CreatedDate { get; private set; }
