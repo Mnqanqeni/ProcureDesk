@@ -10,8 +10,7 @@ public class DbConnectionFactory
 
     public DbConnectionFactory(IConfiguration config)
     {
-        _connectionString = config.GetConnectionString("Default")
-            ?? throw new Exception("Missing connection string: Default");
+        _connectionString = config.GetConnectionString("Default")!;
     }
 
     public IDbConnection Create() => new SqlConnection(_connectionString);
