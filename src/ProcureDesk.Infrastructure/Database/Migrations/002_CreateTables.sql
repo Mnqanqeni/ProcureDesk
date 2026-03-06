@@ -1,6 +1,27 @@
 USE ProcureDesk;
 GO
+-- =========================
+-- User
+-- =========================
+IF OBJECT_ID('dbo.[User]', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.[User] (
+        Id           UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
 
+        Username     VARCHAR(50)  NOT NULL UNIQUE,
+        Email        VARCHAR(200) NOT NULL UNIQUE,
+        PasswordHash VARCHAR(200) NOT NULL,
+
+        Role         VARCHAR(50)  NOT NULL,
+        IsActive     BIT          NOT NULL,
+
+        CreatedDate  DATETIME2    NOT NULL,
+        EditDate     DATETIME2    NOT NULL,
+        CreateUser   VARCHAR(100) NOT NULL,
+        EditUser     VARCHAR(100) NOT NULL
+    );
+END
+GO
 -- =========================
 -- Supplier
 -- =========================
